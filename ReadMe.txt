@@ -1,0 +1,2 @@
+Welcome to Kindle Fire 2 and HD First Aide. Please save the   contents to the desktop in a folder named KFFirstAide and
+execute the RunMe.bat - Please do not modify any of the files or attempt to Flash the incorrect version of software to your Kindle. This utility does not have any Warranty or Guarantee, it is sold 'As Is' with no Warranty made or implied. You may contact the Developer Prokennexusa through email: prokennexusa@gmail.com or USA (707) 774-5923. This software is intended to be used as a disaster recovery package only.

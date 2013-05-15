@@ -1,0 +1,2 @@
+Amazon Mobile App SDK
+Copyright 2000-2012 Amazon.com, Inc. or its affiliates. All Rights Reserved.
