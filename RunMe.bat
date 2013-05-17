@@ -84,6 +84,7 @@ ECHO 42. Fix Sluggish Kindle With Flashing Screen		    (ADB)
 ECHO 43. Upgrade Superuser To The Latest Stable Version             (ADB)
 ECHO 44. Upgrade Busybox (Symbolic) To The Latest Stable Version    (ADB)
 ECHO 45. Install ChainFire 3D (Improves 3D Performance)		    (ADB)
+ECHO 46. Backup Boot0 Partition to the backup folder                        (ADB)
 ECHO 0.  Exit
 ECHO --------------------------------------------------------------------
 
@@ -135,6 +136,7 @@ IF /I '%INPUT%'=='42' GOTO OPTION42
 IF /I '%INPUT%'=='43' GOTO OPTION43
 IF /I '%INPUT%'=='44' GOTO OPTION44
 IF /I '%INPUT%'=='45' GOTO OPTION45
+IF /I '%INPUT%'=='46' GOTO OPTION46
 IF /I '%INPUT%'=='99' GOTO OPTION99
 
 :OPTION1
@@ -11040,6 +11042,206 @@ echo.
 adb kill-server
 echo. 
 CALL:menu
+
+:OPTION46
+echo.
+cls
+echo.
+COLOR 2
+echo.
+ECHO *********************************************************************************
+ECHO * This Option Will Backup The Boot0 Partition on your kindle fire               *
+ECHO * To A Folder New Folder Named Backup On The SD Card.                           *
+ECHO * Then The Option Pull the Image To Your Computer,                              *
+ECHO * When Done Please Verify You Have The image on your computer.                  *
+ECHO * The boot0 partition is where your device's WIFI and Bluetooth MAC addresses   *
+ECHO * Are kept along with all your device's hardware specific info.                 *    
+ECHO *********************************************************************************
+echo.
+set path=C:\KFFirstAide;%path%
+cd \KFFirstAide
+echo.
+COLOR 2
+echo.
+CALL:yesno "Would You Like To Backup The boot0 partition using option 46?" OPTION46.0 OPTION46.1
+
+
+:OPTION46.0
+echo.
+cls
+echo.
+echo.
+COLOR 2
+ECHO ***********************************************************
+ECHO *Please Make Sure ADB Is Enabled On The Kindle By Going To*
+ECHO * The Kindle Menu More - Security - Enable ADB  (Turn On) *
+ECHO *And You Have The Kindle Plugged In To USB Using A Normal *
+ECHO *  USB Cable To The Computer, NOT The Factory USB Cable   *
+ECHO ***********************************************************
+echo.
+PAUSE
+echo.
+ECHO ************************************************
+ECHO * OK Here We Go, We Are Beginning The Process! *
+ECHO ************************************************
+echo.
+cd \KFFirstAide
+echo.
+ECHO ***************************************
+ECHO * We Are Now Waking Up The ADB Server *
+ECHO *If You Have The Android SDK Installed*
+ECHO *This Backup Oprtation Will Fail..... *
+ECHO ***************************************
+echo.
+adb kill-server
+adb wait-for-device
+echo.
+ECHO *********************************************
+ECHO *We Are Now Executing The Local Backup, This*
+ECHO *Will Take A While, Please Wait.............*
+ECHO * Please Pay Close Attention To The Kindle  *
+ECHO * For A Superuser Popup, Be Sure To Click   *
+ECHO *Allow Or Grant Otherwise This Process Will * 
+ECHO *                 Fail!                     *
+ECHO *********************************************
+echo.
+adb shell su -c "ls /system/xbin/busybox"
+if %errorlevel% == 1 goto OPTION46.2
+echo.
+adb shell su -c "rm -R /data/local/backup"
+ECHO Please Ignore Any Errors Above This Line
+adb shell su -c "mkdir /data/local/backup"
+adb shell su -c "busybox chown media_rw.media_rw /data/local/backup"
+adb shell su -c "busybox chmod 777 /data/local/backup"
+echo.
+cd \KFFirstAide\Backup
+echo.
+ECHO I Am Backing Up Partition 0 (boot0)
+ECHO ***************************
+adb shell su -c "dd if=/dev/block/mmcblk0boot0 of=/sdcard/boot0block.img"
+ECHO *********************************
+ECHO We Are Now Modify Ownership/Permissions Of All Archives
+ECHO *********************************
+adb shell su -c "busybox chmod 777 /data/local/backup/boot0block.img"
+adb shell su -c "busybox chown media_rw.media_rw /data/local/backup/boot0block.img"
+echo.
+echo.
+ECHO ***************************************************************
+ECHO *OK, The Backup Has Completed We Are Now Pulling A Copy Of The*
+ECHO *Backup To Your Computer In A Folder Named KindleBackup. This *
+ECHO * Will Take Some Time To Complete, Depending On The Speed Of  *
+ECHO *             Your USB Subsystem............                  *
+ECHO ***************************************************************
+echo.
+echo.
+cd \KFFirstAide\Backup
+adb pull /data/local/backup/boot0block.img
+echo.
+cd \KFFirstAide
+echo.
+ECHO ***********************************************
+ECHO *OK, We Are Done With The Process, We Are Now *
+ECHO *Rebooting The Kindle So The Backup Is Removed*
+ECHO *             From Memory.                    *
+ECHO ***********************************************
+adb reboot
+adb wait-for-device
+echo.
+ECHO ***********************************************
+ECHO * We Are Now Performing A Cleanup Of The Temp *
+ECHO *  Directory. If you See The Following Error  *
+ECHO *    The Directory Is Empty. The Error        *
+ECHO * rm failed for *, No such file or directory  *
+ECHO *    Is Expected And Can Be Ignored.          *
+ECHO ***********************************************
+echo.
+echo.
+COLOR 2
+echo.
+ECHO *************************************************
+ECHO *The Backup Process Has Completed. Please Make A*
+ECHO *Copy Of The Backup From The Backup Folder to CD*
+ECHO *************************************************
+echo.
+cd \KFFirstAide
+echo.
+PAUSE
+echo.
+adb kill-server
+echo.
+CALL:menu
+
+:OPTION46.1
+echo.
+cls
+echo.
+echo.
+COLOR 2
+echo.
+ECHO *************************************************
+ECHO * The Operation To Backup The Kindle To A Folder*
+ECHO *    Named Backup Was Canceled By The User!     *
+ECHO *************************************************
+echo.
+cd \KFFirstAide
+echo.
+PAUSE
+echo.
+adb kill-server
+echo.
+cls
+echo.
+CALL:menu
+
+:OPTION46.2
+echo.
+cls
+echo.
+echo.
+COLOR 2
+echo.
+ECHO ******************************************************
+ECHO * It Looks Like Busybox Is Missing, Give Me A Minute *
+ECHO *         And We Will Install Busybox.               *
+ECHO ******************************************************
+echo.
+cd \KFFirstAide
+del \KFFirstAide\busybox
+del \KFFirstAide\Busybox_Installer_4.1.apk
+wget http://dl.dropbox.com/u/54456659/busybox/busybox
+wget http://dl.dropbox.com/u/54456659/busybox/Busybox_Installer_4.1.apk
+adb shell su -c "busybox mount -o remount,rw ext4 /system"
+adb shell su -c "mount -o rw,remount /dev/block/mmcblk0p1 /system"
+adb shell su -c "mkdir /data/local/tmp"
+adb push \KFFirstAide\busybox /data/local/tmp/.
+adb shell su -c "busybox chmod 755 /data/local/tmp/busybox"
+adb shell su -c "busybox chown 0:0 /data/local/tmp/busybox"
+adb shell su -c "dd if=/data/local/tmp/busybox of=/system/xbin/busybox"
+adb shell su -c "busybox chown root.shell /system/xbin/busybox"
+adb shell su -c "busybox chmod 04755 /system/xbin/busybox"
+adb shell su -c "/system/xbin/busybox --install -s /system/xbin"
+adb shell su -c "busybox chmod 755 /system/xbin/busybox"
+adb shell su -c "rm -r /data/local/tmp/busybox"
+adb shell su -c "busybox mount -o remount,ro ext4 /system"
+adb shell su -c "mount -o ro,remount /dev/block/mmcblk0p1 /system"
+adb install Busybox_Installer_4.1.apk
+cd \KFFirstAide
+echo.
+ECHO *****************************************************
+ECHO * That Is It, Busybox Is Now Installed, We Will Now *
+ECHO *         Return To The Installation!               *
+ECHO *****************************************************
+echo.
+ECHO *****************************************************
+ECHO *  If You See An Error Here, Please Post It In Our  *
+ECHO *     Kindle Fire First Aide Thread. Thanks!        *
+ECHO *****************************************************
+echo.
+PAUSE
+echo.
+adb kill-server
+echo.
+CALL:OPTION46.0
 
 
 :OPTION99
